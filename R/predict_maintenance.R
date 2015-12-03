@@ -24,6 +24,9 @@ df.train.values <- read.csv("training_set_values.csv", na.strings=c(""),
 df.test <- read.csv("test_set_values.csv", na.strings=c(""),
                            colClasses=c("factor", "numeric", "POSIXct", "factor", "integer", "factor", "numeric", "numeric", "factor", "integer", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "integer", "factor", "factor", "factor", "factor", "factor", "integer", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor"))
 
+# TODO_later: check assumptions about 0 values
+# TODO_later: check long/latitude for zero's
+
 # Replace 0 by NA for certain variables (based on our assumption that these 0 values are incorrect..)
 df.train.values$construction_year[df.train.values$construction_year==0] <- NA
 df.train.values$gps_height[df.train.values$gps_height==0] <- NA
@@ -60,11 +63,18 @@ ggplot(df.train, aes(x=extraction_type_group, fill=status_group)) + geom_bar(pos
 
 ## MACHINE LEARNING
 
+# TODO: Check for near zero variance variables and remove these
+nearZeroVar(df.train, saveMetrics = TRUE)$nzv==TRUE
+
+# TODO: drop id variable before applying machine learning
+
+# TODO: test machine learning code
+# TODO_later: use p=.75
 # TODO_later: rename df.training (to prevent confusion with df.train)
 
 # Divide into training, testing and predicting set
 set.seed(1234)
-m.train <- createDataPartition(df.train$status_group, p=.75, list = FALSE)
+m.train <- createDataPartition(df.train$status_group, p=.1, list = FALSE)
 df.training <- df.train[m.train,]
 df.validating <- df.train[-m.train,]
 
