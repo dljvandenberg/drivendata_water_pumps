@@ -45,6 +45,14 @@ df.test$population[df.test$population==0] <- NA
 df.train <- merge(df.train.values, df.train.labels, by="id")
 rm(df.train.values, df.train.labels)
 
+# Remove near zero variance variables
+list.nzv <- nearZeroVar(df.train)
+df.train <- df.train[-list.nzv]
+
+# Drop id variable before applying machine learning
+df.train <- subset(df.train, select=-id)
+
+
 
 ## EXPLORE
 
@@ -63,20 +71,23 @@ ggplot(df.train, aes(x=extraction_type_group, fill=status_group)) + geom_bar(pos
 
 ## MACHINE LEARNING
 
-# TODO: Check for near zero variance variables and remove these
-nearZeroVar(df.train, saveMetrics = TRUE)$nzv==TRUE
-
-# TODO: drop id variable before applying machine learning
-
-# TODO: test machine learning code
+# TODO_CURRENT: solve memory issues during machine learning
+# NOTE: rpart model with predictor subvillage requires 2.8Gb
+# TODO: troubleshoot error when using funder, scheme_name as predictors
 # TODO_later: use p=.75
 # TODO_later: rename df.training (to prevent confusion with df.train)
+# TODO_later: drop wpt_name?, date_recorded?
+# TODO_later: remove df.train to clear up memory
 
 # Divide into training, testing and predicting set
 set.seed(1234)
 m.train <- createDataPartition(df.train$status_group, p=.1, list = FALSE)
 df.training <- df.train[m.train,]
 df.validating <- df.train[-m.train,]
+
+set.seed(2345)
+#model.rpart <- train(factor(status_group) ~ amount_tsh + date_recorded + funder + gps_height + installer + longitude + latitude + basin + subvillage + region + region_code + district_code + lga, data=df.training, method="rpart")
+model.rpart <- train(factor(status_group) ~ waterpoint_type_group, data=df.training, method="rpart")
 
 # Train
 model.rpart <- train(factor(status_group) ~ ., data=df.training, method="rpart")
