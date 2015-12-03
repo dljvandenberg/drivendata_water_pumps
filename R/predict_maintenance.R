@@ -58,6 +58,42 @@ ggplot(df.train, aes(x=waterpoint_type, fill=status_group)) + geom_bar(position=
 ggplot(df.train, aes(x=extraction_type_group, fill=status_group)) + geom_bar(position="fill") + ylab("ratio")
 
 
+## MACHINE LEARNING
 
+# TODO_later: rename df.training (to prevent confusion with df.train)
 
+# Divide into training, testing and predicting set
+set.seed(1234)
+m.train <- createDataPartition(df.train$status_group, p=.75, list = FALSE)
+df.training <- df.train[m.train,]
+df.validating <- df.train[-m.train,]
+
+# Train
+model.rpart <- train(factor(status_group) ~ ., data=df.training, method="rpart")
+model.rf <- train(factor(status_group) ~ ., data=df.training, method="rf")
+model.rf.2 <- train(factor(status_group) ~ ., data=df.training, method="rf", trControl=trainControl(method="cv", number=10))
+model.gbm <- train(factor(status_group) ~ ., data=df.training, method="gbm")
+
+# Select model
+model.selected <- model.rpart
+
+# Model details
+model.selected
+model.selected$finalModel
+
+# Tree model visualization
+library(rattle)
+fancyRpartPlot(model.selected$finalModel)
+
+# Confusion table and accuracy for validating set
+list.validating.predictions <- predict(model.selected, newdata=df.validating)
+table(df.validating$status_group, list.validating.predictions)
+sum(df.validating$status_group == list.validating.predictions) / length(df.validating$status_group)
+
+# Most important variables
+varImp(model.selected)
+
+# Save/load model to/from file
+saveRDS(model.selected, "model_rpart.rds")
+# model <- readRDS("model_rf.rds")
 
