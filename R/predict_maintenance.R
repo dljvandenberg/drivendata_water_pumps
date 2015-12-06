@@ -10,18 +10,18 @@ library(ggplot2)
 library(caret)
 
 # Workdir
-setwd("~/git/drivendata_water_pumps/data")
+setwd("~/git/drivendata_water_pumps")
 
 
 ## IMPORT AND CLEAN
 
 # Read data sets (labels contains status of water pumps)
 # and explicitly set classes (because of incorrect automatic factors and date)
-df.train.labels <- read.csv("training_set_labels.csv", na.strings=c(""),
+df.train.labels <- read.csv("./data/training_set_labels.csv", na.strings=c(""),
                             colClasses=c("factor", "factor"))
-df.train.values <- read.csv("training_set_values.csv", na.strings=c(""),
+df.train.values <- read.csv("./data/training_set_values.csv", na.strings=c(""),
                             colClasses=c("factor", "numeric", "POSIXct", "factor", "integer", "factor", "numeric", "numeric", "factor", "integer", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "integer", "factor", "factor", "factor", "factor", "factor", "integer", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor"))
-df.test <- read.csv("test_set_values.csv", na.strings=c(""),
+df.test <- read.csv("./data/test_set_values.csv", na.strings=c(""),
                            colClasses=c("factor", "numeric", "POSIXct", "factor", "integer", "factor", "numeric", "numeric", "factor", "integer", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "integer", "factor", "factor", "factor", "factor", "factor", "integer", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor"))
 
 # TODO_later: check assumptions about 0 values (we kept these 0 for the moment in order to prevent issues during ML)
@@ -126,5 +126,5 @@ sum(df.validating$status_group == list.validating.predictions) / length(df.valid
 varImp(model.selected)
 
 # Save/load model to/from file
-saveRDS(model.selected, "model_rf_p01_region_quantity.rds")
+saveRDS(model.selected, "./models/model.rf.1_p01_region_quantity.rds")
 #model.selected <- readRDS("model_rf.rds")
