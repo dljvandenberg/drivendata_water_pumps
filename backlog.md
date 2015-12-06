@@ -10,7 +10,9 @@
     a. Find limitations
     a. Don't use subvillage and wpt_name as predictors (too much memory usage)
     a. Remove unused dataframes to clear up memory (df.train.raw)?
-#. Refactoring: put code in functions
+#. Refactoring:
+    a. Put code in functions
+    b. Rename vars list.* to l.*
 #. Use p=.75 in splitting training/validating sets
 #. Train more complicated models
     a. Include more predictors

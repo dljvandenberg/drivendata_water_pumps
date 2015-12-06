@@ -74,7 +74,7 @@ df.train.select <- df.train.raw[-list.nzv]
 df.train.select <- subset(df.train.select, select=-id)
 
 
-## MACHINE LEARNING
+## TRAIN MACHINE LEARNING MODEL
 
 # Divide into training, testing and predicting set
 set.seed(1234)
@@ -106,14 +106,12 @@ model.rf.1 <- train(factor(status_group) ~ region + quantity, data=df.training, 
 # Select model
 model.selected <- model.rf.1
 
-
 # Model details
 model.selected
 model.selected$finalModel
 
 # Confusion table and accuracy for validating set
-#list.validating.predictions <- predict(model.selected, newdata=df.validating, na.action=na.fail)
-list.validating.predictions <- predict(model.selected, newdata=df.validating)
+list.validating.predictions <- predict(model.selected, newdata=df.validating, na.action=na.fail)
 table(df.validating$status_group, list.validating.predictions)
 sum(df.validating$status_group == list.validating.predictions) / length(df.validating$status_group)
 
@@ -122,4 +120,17 @@ varImp(model.selected)
 
 # Save/load model to/from file
 saveRDS(model.selected, "./models/model.rf.1_p01_region_quantity.rds")
-#model.selected <- readRDS("model_rf.rds")
+
+
+
+## PREDICT ON TEST SET AND SAVE RESULTS
+
+#model.selected <- readRDS("./models/model.rf.1_p01_region_quantity.rds")
+
+# Apply model to test set
+list.test.predictions <- predict(model.selected, newdata=df.test, na.action=na.fail)
+
+# Save results as csv with variables id, status_group
+df.predictions <- transform(df.test, status_group=list.test.predictions)
+df.predictions <- subset(df.predictions, select=c("id", "status_group"))
+write.csv(df.predictions, "./predictions/predictions.rf.1_p01_region_quantity.csv", row.names=FALSE)
