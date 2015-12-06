@@ -81,7 +81,7 @@ ggplot(df.train, aes(x=waterpoint_type, fill=status_group)) + geom_bar(position=
 
 # Divide into training, testing and predicting set
 set.seed(1234)
-m.train <- createDataPartition(df.train$status_group, p=.75, list = FALSE)
+m.train <- createDataPartition(df.train$status_group, p=.1, list = FALSE)
 df.training <- df.train[m.train,]
 df.validating <- df.train[-m.train,]
 
@@ -94,15 +94,23 @@ if(length(list.nzv) > 0) {
 
 # Train
 set.seed(2345)
-#model.rpart <- train(factor(status_group) ~ construction_year + extraction_type_group, data=df.training, method="rpart")
-model.rf <- train(factor(status_group) ~ region + quantity, data=df.training, method="rf")
-model.rf.1 <- train(factor(status_group) ~ construction_year + public_meeting + scheme_management + permit + extraction_type + management + payment + water_quality + quantity + source + waterpoint_type, data=df.training, method="rf")
-#model.rf.2 <- train(factor(status_group) ~ amount_tsh + date_recorded + installer + longitude + latitude + basin + region + region_code + district_code + lga + ward + population + public_meeting + scheme_management + permit + construction_year + extraction_type + extraction_type_group + extraction_type_class + management + management_group + payment + payment_type + water_quality + quality_group + quantity + quantity_group + source + source_type + source_class + waterpoint_type + waterpoint_type_group, data=df.training, method="rf")
-#model.rf.3 <- train(factor(status_group) ~ ., data=df.training, method="rf", trControl=trainControl(method="cv", number=10))
+model.rpart.1 <- train(factor(status_group) ~ region + quantity, data=df.training, method="rpart", preProc="knnImpute")
+
+# model.rpart.2 <- train(factor(status_group) ~ construction_year + public_meeting + scheme_management + permit + extraction_type + management + payment + water_quality + quantity + source + waterpoint_type,
+#                         data=df.training,
+#                         method="rpart",
+#                         preProc="knnImpute"
+#                         )
+
+model.rf.1 <- train(factor(status_group) ~ region + quantity, data=df.training, method="rf", preProc="knnImpute")
+#model.rf.2 <- train(factor(status_group) ~ construction_year + public_meeting + scheme_management + permit + extraction_type + management + payment + water_quality + quantity + source + waterpoint_type, data=df.training, method="rf")
+#model.rf.3 <- train(factor(status_group) ~ amount_tsh + date_recorded + installer + longitude + latitude + basin + region + region_code + district_code + lga + ward + population + public_meeting + scheme_management + permit + construction_year + extraction_type + extraction_type_group + extraction_type_class + management + management_group + payment + payment_type + water_quality + quality_group + quantity + quantity_group + source + source_type + source_class + waterpoint_type + waterpoint_type_group, data=df.training, method="rf")
+#model.rf.4 <- train(factor(status_group) ~ ., data=df.training, method="rf", trControl=trainControl(method="cv", number=10))
 #model.gbm <- train(factor(status_group) ~ ., data=df.training, method="gbm")
 
 # Select model
-model.selected <- model.rf
+model.selected <- model.rf.1
+
 
 # Model details
 model.selected
@@ -118,5 +126,5 @@ sum(df.validating$status_group == list.validating.predictions) / length(df.valid
 varImp(model.selected)
 
 # Save/load model to/from file
-saveRDS(model.selected, "model_rf.rds")
+saveRDS(model.selected, "model_rf_p01_region_quantity.rds")
 #model.selected <- readRDS("model_rf.rds")
