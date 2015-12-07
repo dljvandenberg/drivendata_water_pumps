@@ -11,7 +11,6 @@
     a. Remove unused dataframes to clear up memory (df.train.raw)?
 #. Refactoring:
     a. Put code in functions
-    b. Rename vars list.* to l.*
 #. Improve model accuracy
     a. Use p=.75 in splitting training/validating sets
     a. Include more predictors
