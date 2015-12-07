@@ -1,5 +1,6 @@
 # Backlog
 
+#. Prioritize backlog
 #. Increase data quality:
     a. Check ratio of NAs, unknowns, zeros, wpt_name=="none", near zeros in long/latitude, date_recorded (and document reasons to exclude)
     a. Replace incorrect zeros by NAs? (and write down assumptions)
@@ -14,10 +15,10 @@
 #. Improve model accuracy
     a. Use p=.75 in splitting training/validating sets
     a. Include more predictors
+    a. PCA preprocessing
+    a. trControl=trainControl(method="cv", number=5)
     a. method="gbm"
-    a. trControl=trainControl(method="cv", number=10)
 #. Create Shiny application based on generated model
-    a. Application name: Water Pump Maintenance Predictor
     a. Input: predictor variables (drop down lists) for specific water pump
     a. Output: probability of status_group (type="prob") and most likely status_group (type="raw")
 
