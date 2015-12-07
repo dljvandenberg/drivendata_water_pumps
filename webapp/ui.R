@@ -45,9 +45,9 @@ shinyUI(
                       h3("About the data"),
                       
                       div(
-                          "The data set was provided by", a(href="...", "..."),
-                          "and can be viewed or downloaded", a(href="...", "here"),
-                          "(20 MB). Terms of use for the data can be found", a(href="...", "here.")
+                          "The data set used was provided by",
+                          a(href="http://www.drivendata.org/competitions/7/rules/", "DrivenData"),
+                          "..."
                       )
             )            
         )
