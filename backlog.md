@@ -17,6 +17,10 @@
     a. Include more predictors
     a. method="gbm"
     a. trControl=trainControl(method="cv", number=10)
+#. Create Shiny application based on generated model
+    a. Application name: Water Pump Maintenance Predictor
+    a. Input: predictor variables (drop down lists) for specific water pump
+    a. Output: probability of status_group (type="prob") and most likely status_group (type="raw")
 
 
 # Notes
