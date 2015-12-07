@@ -1,6 +1,5 @@
 # Backlog
 
-#. Submit first correct results
 #. Increase data quality:
     a. Check ratio of NAs, unknowns, zeros, wpt_name=="none", near zeros in long/latitude, date_recorded (and document reasons to exclude)
     a. Replace incorrect zeros by NAs? (and write down assumptions)
@@ -13,8 +12,8 @@
 #. Refactoring:
     a. Put code in functions
     b. Rename vars list.* to l.*
-#. Use p=.75 in splitting training/validating sets
-#. Train more complicated models
+#. Improve model accuracy
+    a. Use p=.75 in splitting training/validating sets
     a. Include more predictors
     a. method="gbm"
     a. trControl=trainControl(method="cv", number=10)
