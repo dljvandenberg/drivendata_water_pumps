@@ -15,8 +15,10 @@ library(caret)
 setwd("~/git/drivendata_water_pumps")
 
 # Constants
-filter.level.naratio=0.01
-
+seed.universal=1234
+filter.level.naratio=.0
+filter.levels.max=30
+training.set.ratio=.2
 
 
 ## IMPORT AND MERGE
@@ -70,27 +72,35 @@ ggplot(df.train.raw, aes(x=management, fill=status_group)) + geom_bar(position="
 #df.test$amount_tsh[df.test$amount_tsh==0] <- NA
 #df.test$population[df.test$population==0] <- NA
 
-# Remove columns with na.ratio greater or equal than filter.level.naratio
+# Remove columns with na.ratio greater than filter.level.naratio
 v.train.na.ratios <- as.vector(colSums(is.na(df.train.raw))/(dim(df.train.raw)[1]))
-df.train.select <- df.train.raw[, v.train.na.ratios<filter.level.naratio]
+df.train.select <- df.train.raw[, v.train.na.ratios<=filter.level.naratio]
 
 # Remove near zero variance variables
 v.nzv <- nearZeroVar(df.train.select)
 df.train.select <- df.train.select[-v.nzv]
 
-# Drop id variable before applying machine learning
+# Remove id variable before applying machine learning (likely correlation by experiment design)
 df.train.select <- subset(df.train.select, select=-id)
+
+# Remove factor variables with more levels than filter.levels.max
+v.too.many.factor.levels <- unlist(lapply(df.train.select, function(var) { is.factor(var) && length(levels(var))>=filter.levels.max }))
+df.train.select <- df.train.select[, !v.too.many.factor.levels]
+
+# Manually removing variables with high likelihood of becoming zero variance (for now) after sampling
+df.train.select <- subset(df.train.select, select=-c(extraction_type, region_code))
+
 
 
 ## TRAIN MACHINE LEARNING MODEL
 
 # Divide into training, testing and predicting set
-set.seed(1234)
-m.train <- createDataPartition(df.train.select$status_group, p=.5, list = FALSE)
+set.seed(seed.universal)
+m.train <- createDataPartition(df.train.select$status_group, p=training.set.ratio, list = FALSE)
 df.training <- df.train.select[m.train,]
 df.validating <- df.train.select[-m.train,]
 
-# Remove near zero variance variables ("gps_height"  "num_private" "recorded_by")
+# Remove near zero variance variables
 v.nzv <- nearZeroVar(df.training)
 if(length(v.nzv) > 0) {
     print(paste("Removing columns with near zero variance: ", v.nzv))
@@ -98,15 +108,16 @@ if(length(v.nzv) > 0) {
 }
 
 # Train
-set.seed(2345)
+set.seed(seed.universal)
 #model.rpart.1 <- train(factor(status_group) ~ region + quantity, data=df.training, method="rpart", preProc="knnImpute")
 #model.rf.1 <- train(factor(status_group) ~ region + quantity, data=df.training, method="rf", preProc="knnImpute")
 #model.rf.2 <- train(factor(status_group) ~ region + quantity + waterpoint_type + payment, data=df.training, method="rf", preProc="knnImpute")
 #model.rf.3 <- train(factor(status_group) ~ region + quantity + waterpoint_type + payment + extraction_type + management + water_quality + source, data=df.training, method="rf", preProc="knnImpute")
-model.rf.4 <- train(factor(status_group) ~ region + quantity + waterpoint_type + payment + extraction_type + management + water_quality + source, data=df.training, method="rf")
+#model.rf.4 <- train(factor(status_group) ~ region + quantity + waterpoint_type + payment + extraction_type + management + water_quality + source, data=df.training, method="rf")
+model.rf.5 <- train(status_group ~ ., data=df.training, method="rf", preProcess=c("pca"), trControl = trainControl(method="cv"))
 
 # Select model
-model.selected <- model.rf.4
+model.selected <- model.rf.5
 
 # Model details
 model.selected
@@ -121,13 +132,13 @@ sum(df.validating$status_group == v.validating.predictions) / length(df.validati
 varImp(model.selected)
 
 # Save/load model to/from file
-saveRDS(model.selected, "./models/model.rf.4_p05_region_quantity_waterpointtype_payment_extractiontype_management_waterquality_source.rds")
+saveRDS(model.selected, "./models/model.rf.5_p075_region_quantity_waterpointtype_payment_extractiontype_management_waterquality_source.rds")
 
 
 
 ## PREDICT ON TEST SET AND SAVE RESULTS
 
-#model.selected <- readRDS("./models/model.rf.4_p05_region_quantity_waterpointtype_payment_extractiontype_management_waterquality_source.rds")
+#model.selected <- readRDS("./models/model.rf.5_p05_region_quantity_waterpointtype_payment_extractiontype_management_waterquality_source.rds")
 
 # Apply model to test set
 v.test.predictions <- predict(model.selected, newdata=df.test, na.action=na.fail)
@@ -135,4 +146,4 @@ v.test.predictions <- predict(model.selected, newdata=df.test, na.action=na.fail
 # Save results as csv with variables id, status_group
 df.predictions <- transform(df.test, status_group=v.test.predictions)
 df.predictions <- subset(df.predictions, select=c("id", "status_group"))
-write.csv(df.predictions, "./predictions/predictions.rf.4_p05_region_quantity_waterpointtype_payment_extractiontype_management_waterquality_source.csv", row.names=FALSE)
+write.csv(df.predictions, "./predictions/predictions.rf.5_p075_region_quantity_waterpointtype_payment_extractiontype_management_waterquality_source.csv", row.names=FALSE)
