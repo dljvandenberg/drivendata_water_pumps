@@ -88,7 +88,7 @@ v.too.many.factor.levels <- unlist(lapply(df.train.select, function(var) { is.fa
 df.train.select <- df.train.select[, !v.too.many.factor.levels]
 
 # Manually removing variables with high likelihood of becoming zero variance (for now) after sampling
-df.train.select <- subset(df.train.select, select=-c(extraction_type, region_code))
+df.train.select <- subset(df.train.select, select=-c(extraction_type, region_code, district_code))
 
 
 
@@ -132,13 +132,13 @@ sum(df.validating$status_group == v.validating.predictions) / length(df.validati
 varImp(model.selected)
 
 # Save/load model to/from file
-saveRDS(model.selected, "./models/model.rf.5_p075_region_quantity_waterpointtype_payment_extractiontype_management_waterquality_source.rds")
+saveRDS(model.selected, "./models/model.rf.5_p02_pca_25vars.rds")
 
 
 
 ## PREDICT ON TEST SET AND SAVE RESULTS
 
-#model.selected <- readRDS("./models/model.rf.5_p05_region_quantity_waterpointtype_payment_extractiontype_management_waterquality_source.rds")
+#model.selected <- readRDS("./models/model.rf.5_p02_region_quantity_waterpointtype_payment_extractiontype_management_waterquality_source.rds")
 
 # Apply model to test set
 v.test.predictions <- predict(model.selected, newdata=df.test, na.action=na.fail)
@@ -146,4 +146,4 @@ v.test.predictions <- predict(model.selected, newdata=df.test, na.action=na.fail
 # Save results as csv with variables id, status_group
 df.predictions <- transform(df.test, status_group=v.test.predictions)
 df.predictions <- subset(df.predictions, select=c("id", "status_group"))
-write.csv(df.predictions, "./predictions/predictions.rf.5_p075_region_quantity_waterpointtype_payment_extractiontype_management_waterquality_source.csv", row.names=FALSE)
+write.csv(df.predictions, "./predictions/predictions.rf.5_p02_pca_25vars.csv", row.names=FALSE)
