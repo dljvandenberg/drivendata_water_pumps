@@ -1,6 +1,6 @@
 ### Predict Water Pump Maintenance
 
-# Convention: prefix of variable names denotes type (l.* = list, m.* = matrix, df.* = dataframe, model.* = model)
+# Convention: prefix of variable names denotes type (l.* = list, v.* = vector, m.* = matrix, df.* = dataframe, model.* = model)
 
 
 ## PREPARE
@@ -14,8 +14,12 @@ library(caret)
 # Workdir
 setwd("~/git/drivendata_water_pumps")
 
+# Constants
+filter.level.naratio=0.01
 
-## IMPORT AND CLEAN
+
+
+## IMPORT AND MERGE
 
 # Read data sets (labels contains status of water pumps)
 # and explicitly set classes (because of incorrect automatic factors and date)
@@ -26,30 +30,17 @@ df.train.values <- read.csv("./data/training_set_values.csv", na.strings=c(""),
 df.test <- read.csv("./data/test_set_values.csv", na.strings=c(""),
                            colClasses=c("factor", "numeric", "POSIXct", "factor", "integer", "factor", "numeric", "numeric", "factor", "integer", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "integer", "factor", "factor", "factor", "factor", "factor", "integer", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor", "factor"))
 
-# Replace 0 by NA for certain variables (based on our assumption that these 0 values are incorrect..)
-#df.train.values$construction_year[df.train.values$construction_year==0] <- NA
-#df.train.values$gps_height[df.train.values$gps_height==0] <- NA
-#df.train.values$num_private[df.train.values$num_private==0] <- NA
-#df.train.values$amount_tsh[df.train.values$amount_tsh==0] <- NA
-#df.train.values$population[df.train.values$population==0] <- NA
-#df.test$construction_year[df.test$construction_year==0] <- NA
-#df.test$gps_height[df.test$gps_height==0] <- NA
-#df.test$num_private[df.test$num_private==0] <- NA
-#df.test$amount_tsh[df.test$amount_tsh==0] <- NA
-#df.test$population[df.test$population==0] <- NA
-
 # Merge training values and labels and remove obsolete data frames
 df.train.raw <- merge(df.train.values, df.train.labels, by="id")
 rm(df.train.values, df.train.labels)
 
 
 
-## EXPLORE
+## EXPLORE RAW DATA
 
-# Check data quality (NAs, unknowns, zeros)
+# Check data quality (ratio of NAs)
 summary(df.train.raw)
-m.train.naratios <- as.matrix(colSums(is.na(df.train.raw))/(dim(df.train.raw)[1]))
-plot(m.train.naratios)
+plot(as.vector(colSums(is.na(df.train.raw))/(dim(df.train.raw)[1])))
 
 # Count status_group categories
 table(df.train.raw$status_group)
@@ -65,11 +56,27 @@ ggplot(df.train.raw, aes(x=management, fill=status_group)) + geom_bar(position="
 
 
 
-## ADDITIONAL CLEANING
+## CLEAN
 
-# Remove near zero variance variables ("gps_height"  "num_private" "recorded_by")
-l.nzv <- nearZeroVar(df.train.raw)
-df.train.select <- df.train.raw[-l.nzv]
+# Replace 0 by NA for certain variables (based on our assumption that these 0 values are incorrect..)
+#df.train.values$construction_year[df.train.values$construction_year==0] <- NA
+#df.train.values$gps_height[df.train.values$gps_height==0] <- NA
+#df.train.values$num_private[df.train.values$num_private==0] <- NA
+#df.train.values$amount_tsh[df.train.values$amount_tsh==0] <- NA
+#df.train.values$population[df.train.values$population==0] <- NA
+#df.test$construction_year[df.test$construction_year==0] <- NA
+#df.test$gps_height[df.test$gps_height==0] <- NA
+#df.test$num_private[df.test$num_private==0] <- NA
+#df.test$amount_tsh[df.test$amount_tsh==0] <- NA
+#df.test$population[df.test$population==0] <- NA
+
+# Remove columns with na.ratio greater or equal than filter.level.naratio
+v.train.na.ratios <- as.vector(colSums(is.na(df.train.raw))/(dim(df.train.raw)[1]))
+df.train.select <- df.train.raw[, v.train.na.ratios<filter.level.naratio]
+
+# Remove near zero variance variables
+v.nzv <- nearZeroVar(df.train.select)
+df.train.select <- df.train.select[-v.nzv]
 
 # Drop id variable before applying machine learning
 df.train.select <- subset(df.train.select, select=-id)
@@ -84,10 +91,10 @@ df.training <- df.train.select[m.train,]
 df.validating <- df.train.select[-m.train,]
 
 # Remove near zero variance variables ("gps_height"  "num_private" "recorded_by")
-l.nzv <- nearZeroVar(df.training)
-if(length(l.nzv) > 0) {
-    print(paste("Removing columns with near zero variance: ", l.nzv))
-    df.training <- df.training[-l.nzv]
+v.nzv <- nearZeroVar(df.training)
+if(length(v.nzv) > 0) {
+    print(paste("Removing columns with near zero variance: ", v.nzv))
+    df.training <- df.training[-v.nzv]
 }
 
 # Train
@@ -106,9 +113,9 @@ model.selected
 model.selected$finalModel
 
 # Confusion table and accuracy for validating set
-l.validating.predictions <- predict(model.selected, newdata=df.validating, na.action=na.fail)
-table(df.validating$status_group, l.validating.predictions)
-sum(df.validating$status_group == l.validating.predictions) / length(df.validating$status_group)
+v.validating.predictions <- predict(model.selected, newdata=df.validating, na.action=na.fail)
+table(df.validating$status_group, v.validating.predictions)
+sum(df.validating$status_group == v.validating.predictions) / length(df.validating$status_group)
 
 # Most important variables
 varImp(model.selected)
@@ -123,9 +130,9 @@ saveRDS(model.selected, "./models/model.rf.4_p05_region_quantity_waterpointtype_
 #model.selected <- readRDS("./models/model.rf.4_p05_region_quantity_waterpointtype_payment_extractiontype_management_waterquality_source.rds")
 
 # Apply model to test set
-l.test.predictions <- predict(model.selected, newdata=df.test, na.action=na.fail)
+v.test.predictions <- predict(model.selected, newdata=df.test, na.action=na.fail)
 
 # Save results as csv with variables id, status_group
-df.predictions <- transform(df.test, status_group=l.test.predictions)
+df.predictions <- transform(df.test, status_group=v.test.predictions)
 df.predictions <- subset(df.predictions, select=c("id", "status_group"))
 write.csv(df.predictions, "./predictions/predictions.rf.4_p05_region_quantity_waterpointtype_payment_extractiontype_management_waterquality_source.csv", row.names=FALSE)
