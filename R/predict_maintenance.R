@@ -79,7 +79,7 @@ df.train.select <- subset(df.train.select, select=-id)
 
 # Divide into training, testing and predicting set
 set.seed(1234)
-m.train <- createDataPartition(df.train.select$status_group, p=.2, list = FALSE)
+m.train <- createDataPartition(df.train.select$status_group, p=.5, list = FALSE)
 df.training <- df.train.select[m.train,]
 df.validating <- df.train.select[-m.train,]
 
@@ -93,21 +93,13 @@ if(length(l.nzv) > 0) {
 # Train
 set.seed(2345)
 #model.rpart.1 <- train(factor(status_group) ~ region + quantity, data=df.training, method="rpart", preProc="knnImpute")
-
-# model.rpart.2 <- train(factor(status_group) ~ construction_year + public_meeting + scheme_management + permit + extraction_type + management + payment + water_quality + quantity + source + waterpoint_type,
-#                         data=df.training,
-#                         method="rpart",
-#                         preProc="knnImpute"
-#                         )
-
 #model.rf.1 <- train(factor(status_group) ~ region + quantity, data=df.training, method="rf", preProc="knnImpute")
 #model.rf.2 <- train(factor(status_group) ~ region + quantity + waterpoint_type + payment, data=df.training, method="rf", preProc="knnImpute")
-model.rf.3 <- train(factor(status_group) ~ region + quantity + waterpoint_type + payment + extraction_type + management + water_quality + source, data=df.training, method="rf", preProc="knnImpute")
-#model.rf.2 <- train(factor(status_group) ~ construction_year + extraction_type + management + payment + water_quality + quantity + source + waterpoint_type, data=df.training, method="rf")
-#model.rf.3 <- train(factor(status_group) ~ amount_tsh + date_recorded + installer + longitude + latitude + basin + region + region_code + district_code + lga + ward + population + public_meeting + scheme_management + permit + construction_year + extraction_type + extraction_type_group + extraction_type_class + management + management_group + payment + payment_type + water_quality + quality_group + quantity + quantity_group + source + source_type + source_class + waterpoint_type + waterpoint_type_group, data=df.training, method="rf")
+#model.rf.3 <- train(factor(status_group) ~ region + quantity + waterpoint_type + payment + extraction_type + management + water_quality + source, data=df.training, method="rf", preProc="knnImpute")
+model.rf.4 <- train(factor(status_group) ~ region + quantity + waterpoint_type + payment + extraction_type + management + water_quality + source, data=df.training, method="rf")
 
 # Select model
-model.selected <- model.rf.3
+model.selected <- model.rf.4
 
 # Model details
 model.selected
@@ -122,13 +114,13 @@ sum(df.validating$status_group == l.validating.predictions) / length(df.validati
 varImp(model.selected)
 
 # Save/load model to/from file
-saveRDS(model.selected, "./models/model.rf.3_p02_region_quantity_waterpointtype_payment_extractiontype_management_waterquality_source.rds")
+saveRDS(model.selected, "./models/model.rf.4_p05_region_quantity_waterpointtype_payment_extractiontype_management_waterquality_source.rds")
 
 
 
 ## PREDICT ON TEST SET AND SAVE RESULTS
 
-#model.selected <- readRDS("./models/model.rf.1_p01_region_quantity.rds")
+#model.selected <- readRDS("./models/model.rf.4_p05_region_quantity_waterpointtype_payment_extractiontype_management_waterquality_source.rds")
 
 # Apply model to test set
 l.test.predictions <- predict(model.selected, newdata=df.test, na.action=na.fail)
@@ -136,4 +128,4 @@ l.test.predictions <- predict(model.selected, newdata=df.test, na.action=na.fail
 # Save results as csv with variables id, status_group
 df.predictions <- transform(df.test, status_group=l.test.predictions)
 df.predictions <- subset(df.predictions, select=c("id", "status_group"))
-write.csv(df.predictions, "./predictions/predictions.rf.3_p02_region_quantity_waterpointtype_payment_extractiontype_management_waterquality_source.csv", row.names=FALSE)
+write.csv(df.predictions, "./predictions/predictions.rf.4_p05_region_quantity_waterpointtype_payment_extractiontype_management_waterquality_source.csv", row.names=FALSE)
