@@ -18,7 +18,7 @@ setwd("~/git/drivendata_water_pumps")
 seed.universal=1234
 filter.level.naratio=.0
 filter.levels.max=30
-training.set.ratio=.2
+training.set.ratio=.5
 
 
 ## IMPORT AND MERGE
@@ -114,10 +114,11 @@ set.seed(seed.universal)
 #model.rf.2 <- train(factor(status_group) ~ region + quantity + waterpoint_type + payment, data=df.training, method="rf", preProc="knnImpute")
 #model.rf.3 <- train(factor(status_group) ~ region + quantity + waterpoint_type + payment + extraction_type + management + water_quality + source, data=df.training, method="rf", preProc="knnImpute")
 #model.rf.4 <- train(factor(status_group) ~ region + quantity + waterpoint_type + payment + extraction_type + management + water_quality + source, data=df.training, method="rf")
-model.rf.5 <- train(status_group ~ ., data=df.training, method="rf", preProcess=c("pca"), trControl = trainControl(method="cv"))
+#model.rf.5 <- train(status_group ~ ., data=df.training, method="rf", preProcess=c("pca"), trControl = trainControl(method="cv"))
+model.rf.5b <- train(status_group ~ ., data=df.training, method="rf", trControl = trainControl(method="cv"))
 
 # Select model
-model.selected <- model.rf.5
+model.selected <- model.rf.5b
 
 # Model details
 model.selected
@@ -132,7 +133,7 @@ sum(df.validating$status_group == v.validating.predictions) / length(df.validati
 varImp(model.selected)
 
 # Save/load model to/from file
-saveRDS(model.selected, "./models/model.rf.5_p02_pca_25vars.rds")
+saveRDS(model.selected, "./models/model.rf.5b_p05_23vars.rds")
 
 
 
@@ -146,4 +147,4 @@ v.test.predictions <- predict(model.selected, newdata=df.test, na.action=na.fail
 # Save results as csv with variables id, status_group
 df.predictions <- transform(df.test, status_group=v.test.predictions)
 df.predictions <- subset(df.predictions, select=c("id", "status_group"))
-write.csv(df.predictions, "./predictions/predictions.rf.5_p02_pca_25vars.csv", row.names=FALSE)
+write.csv(df.predictions, "./predictions/predictions.rf.5b_p05_23vars.csv", row.names=FALSE)
