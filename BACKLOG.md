@@ -21,7 +21,8 @@
     a. method="gbm"
 #. Create Shiny application based on generated model
     a. Input: predictor variables (drop down lists) for specific water pump
-    a. Output: probability of status_group (type="prob") and most likely status_group (type="raw")
+    a. Train model with trControl=trainControl(classProbs=TRUE) and convert status_group to valid var names using make.names()
+    a. Output: predict probability of status_group (type="prob") and most likely status_group (type="raw")
 
 
 
